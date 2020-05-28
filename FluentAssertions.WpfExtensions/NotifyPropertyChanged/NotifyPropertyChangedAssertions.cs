@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
+using static FluentAssertions.PropertyInfoHelper;
 
 namespace FluentAssertions
 {
@@ -24,22 +24,12 @@ namespace FluentAssertions
                 throw new ArgumentNullException(nameof(propertyExpression));
             }
 
-            if (!(propertyExpression.Body is MemberExpression))
-            {
-                throw new ArgumentException($"{nameof(propertyExpression)} must be a simple property expression of the form bindable => bindable.Value");
-            }
-
-            string propertyName = ((MemberExpression)propertyExpression.Body).Member.Name;
-            PropertyInfo propertyInfo = typeof(T).GetProperty(propertyName);
-
-            if (propertyInfo is null)
-            {
-                throw new ArgumentException($"could not find property with name {propertyName} on instance of type {typeof(T).FullName}");
-            }
+            var propertyInfo = GetPropertyInfoOrThrow(propertyExpression, nameof(propertyExpression));
+            var propertyName = propertyInfo.Name;
 
             if (object.Equals(propertyInfo.GetValue(this.Subject), otherValue))
             {
-                throw new ArgumentException($"{nameof(otherValue)} must have a value different from the current value of property {propertyName}, but both where {otherValue}");
+                throw new ArgumentException($"{nameof(otherValue)} must have a value different from the current value of property {propertyName}, but both where {otherValue}", nameof(otherValue));
             }
 
             using (var monitor = this.Subject.Monitor<INotifyPropertyChanged>())
